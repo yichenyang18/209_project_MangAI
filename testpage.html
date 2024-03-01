@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatGPT API Example</title>
+</head>
+<body>
+
+<textarea id="inputTextarea" rows="4" cols="50"></textarea><br>
+<button onclick="getResponse()">Get Response</button><br>
+<textarea id="outputTextarea" rows="4" cols="50"></textarea>
+
+<script>
+function getResponse() {
+    // Get the input textarea element
+    var inputTextarea = document.getElementById("inputTextarea");
+    
+    // Get the value from the input textarea
+    var inputValue = inputTextarea.value;
+    
+    // Make a POST request to the ChatGPT API endpoint
+    fetch('https://api.openai.com/v1/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer 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' // Replace YOUR_API_KEY with your actual API key
+        },
+        body: JSON.stringify({
+            model: 'text-davinci-003', // Specify the model you want to use
+            prompt: inputValue,
+            max_tokens: 150 // Specify the maximum number of tokens to generate
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Get the output textarea element
+        var outputTextarea = document.getElementById("outputTextarea");
+        
+        // Set the value of the output textarea to the generated response
+        outputTextarea.value = data.choices[0].text.trim();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+
+</body>
+</html>
