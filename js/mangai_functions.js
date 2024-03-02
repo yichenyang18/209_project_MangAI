@@ -136,7 +136,7 @@ const path_sd = "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024
 const headers_sd = {
     "Accept": "application/json",
     "Content-Type": "application/json",
-    Authorization: "Bearer sk-MaHkYwv6KROBk6CoIY5SRuwplWNoJWCvvaXMCfmedQZlGwfo"
+    Authorization: "Bearer "
 };
 
 
@@ -205,7 +205,7 @@ function generateCharacter(){
     Story Generation
 --------------------*/
 
-const API_KEY = "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";
+const API_KEY = "";
 const description = `For the following input, extend it to 4 sentence by adding additional actions and 
                     each sentence only consists of key words or short phrases including action and environmental description
                     (for example: John goes to school today -> 1. at home, walk to the door; 2. outside, get on
