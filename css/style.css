@@ -2051,6 +2051,28 @@ img {
     max-height: 100%; /* Ensure the image doesn't exceed the container height */
 }
 
+/* Style for the label */
+label {
+	font-size: 18px;
+	color: #333;
+	margin-bottom: 10px;
+	display: block;
+}
+
+/* Style for the select element */
+select {
+	padding: 10px;
+	font-size: 16px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	width: 200px;
+}
+
+/* Style for the options */
+option {
+	padding: 10px;
+	font-size: 16px;
+}
 
 /*--------------------------------- Responsive Media Quaries -----------------------------*/
 @media (min-width: 768px) {

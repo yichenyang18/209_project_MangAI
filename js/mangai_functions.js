@@ -7,27 +7,40 @@ var overview_page = `<div class="anime__details__form">
                             <h5>My page</h5>
                         </div>
                         <div class="chapter_img">
-                            <img src="img/test_output.jpg" alt="Image">
+                            <img src="img/test_output.jpg" id="sliderImage" alt="Image">
+                            <br>
+                            <form action="#">
+                            <button type="submit" onclick="nextImage()"><i class="fa fa-angle-right"></i> Next</button>
+                            </form>
                         </div>
                     </div>`;
+
 var character_page = `<div class="anime__details__form">
                     <div class="section-title">
                         <h5>Character AI Generation</h5>
                     </div>
                     <form action="#">
                         <textarea placeholder="Key words about your character" id="character_input"></textarea>
-                        <button type="submit" onclick="getResponse()"><i class="fa fa-location-arrow"></i>Generate</button>
+                        <label for="sd_styles">Style:</label>
+                        <select id="sd_styles" name="sd_styles">
+                            <option value="anime">Anime</option>
+                            <option value="comic-book">Comic Book</option>
+                            <option value="pixel-art">Pixel Art</option>
+                            <option value="line-art">Line Art</option>
+                            <option value="digital-art">Digital Art</option>
+                        </select>
+                        <br><br>
+                        <button type="submit" onclick="generateCharacter()"><i class="fa fa-location-arrow"></i>Generate</button>
                     </form>
                     </div>
-                    <br>
                     <br>
                     <br>
                     <div class="anime__details__form">
                     <div class="section-title">
                         <h5>Generated Result</h5>
                     </div>
-                    <div class="chapter_img">
-                        <img src="img/test_character_output.jpg" id="character_input" alt="Image">
+                    <div class="chapter_img" id="character_img_container">
+                        <img src="img/test_character_output.jpg" id="character_output" alt="Image">
                     </div>
                 </div>`;
 
@@ -57,10 +70,10 @@ var chapter_page =  `<div class="anime__details__form">
                             <h5>Chapter Generation</h5>
                         </div>
                         <form action="#">
-                            <textarea placeholder="Prompt 1" id="story_input"></textarea>
-                            <textarea placeholder="Prompt 2" id="story_input"></textarea>
-                            <textarea placeholder="Prompt 3" id="story_input"></textarea>
-                            <textarea placeholder="Prompt 4" id="story_input"></textarea>
+                            <textarea placeholder="Prompt 1" id="prompt1_input"></textarea>
+                            <textarea placeholder="Prompt 2" id="prompt2_input"></textarea>
+                            <textarea placeholder="Prompt 3" id="prompt3_input"></textarea>
+                            <textarea placeholder="Prompt 4" id="prompt4_input"></textarea>
                             <button type="submit" onclick="generatePage()"><i class="fa fa-location-arrow"></i>Generate</button>
                         </form>
                         </div>
@@ -97,80 +110,142 @@ function changeContent(option) {
 }
 
 /*------------------
+    Overview Pages
+--------------------*/
+var images = ["img/test_output.jpg", "img/test_output2.jpg", "img/test_character_output.jpg"]; // Array of image URLs
+var currentIndex = 0; // Index of the currently displayed image
+
+function nextImage() {
+    var sliderImage = document.getElementById("sliderImage");
+    
+    // Increment the currentIndex and loop back to the start if necessary
+    currentIndex = (currentIndex + 1) % images.length;
+    
+    // Update the src attribute of the image element
+    sliderImage.src = images[currentIndex];
+}
+
+
+
+/*------------------
     Character Generation
 --------------------*/
 
-/*------------------
-var myHeaders = new Headers();
-myHeaders.append("Content-Type", "application/json");
+const path_sd = "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image";
 
-var inputTextarea = document.getElementById("character_input");
-
-var raw = JSON.stringify({
-  "key": "GnIdlTjIfnYkEltApg6Kler3ICvmWWIrdkEyzOOIeWQeP7HFzLMAk4kZhYfy",
-  "prompt": inputTextarea,
-  "negative_prompt": null,
-  "width": "512",
-  "height": "512",
-  "samples": "1",
-  "num_inference_steps": "20",
-  "seed": null,
-  "guidance_scale": 7.5,
-  "safety_checker": "yes",
-  "multi_lingual": "no",
-  "panorama": "no",
-  "self_attention": "no",
-  "upscale": "no",
-  "embeddings_model": null,
-  "webhook": null,
-  "track_id": null
-});
-
-var requestOptions = {
-  method: 'POST',
-  headers: myHeaders,
-  body: raw,
-  redirect: 'follow'
+const headers_sd = {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    Authorization: "Bearer sk-MaHkYwv6KROBk6CoIY5SRuwplWNoJWCvvaXMCfmedQZlGwfo"
 };
 
-fetch("https://stablediffusionapi.com/api/v3/text2img", requestOptions)
-  .then(response => response.text())
-  .then(result => console.log(result))
-  .catch(error => console.log('error', error));
---------------------*/
 
+function generateCharacter(){
+    var inputTextarea = document.getElementById("character_input");
+    var inputValue = inputTextarea.value;
+
+    var selectedStyle = document.getElementById("sd_styles");
+    var selectedStyleValue = selectedStyle.value;
+
+    var body = {
+        steps: 40,
+        width: 1024,
+        height: 1024,
+        seed: 0,
+        cfg_scale: 5,
+        samples: 1,
+        style_preset: selectedStyleValue,
+        text_prompts: [
+            {
+            "text": "general, no details, " + inputValue,
+            "weight": 1
+            },
+            {
+            "text": "blurry, bad, low resultion",
+            "weight": -1
+            }
+        ],
+    };
+
+    fetch(
+        path_sd,
+        {
+            headers: headers_sd,
+            method: "POST",
+            body: JSON.stringify(body),
+        }
+    )
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+
+        var imageContainer = document.getElementById("character_img_container");
+        imageContainer.innerHTML = "";
+
+        data.artifacts.forEach(function(artifact, index) {
+            // Create an image element
+            var img = document.createElement("img");
+    
+            // Set the src attribute of the image to the decoded base64 string
+            img.src = "data:image/png;base64," + artifact.base64; // Assuming the images are PNG format
+    
+            // Set additional attributes if needed
+            img.alt = "Image " + (index + 1); // Set alt text for accessibility
+    
+            // Append the image to the image container
+            imageContainer.appendChild(img);
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
 
 /*------------------
     Story Generation
 --------------------*/
-function generateStory() {
+
+const API_KEY = "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";
+const description = `For the following input, extend it to 4 sentence by adding additional actions and 
+                    each sentence only consists of key words or short phrases including action and environmental description
+                    (for example: John goes to school today -> 1. at home, walk to the door; 2. outside, get on
+                    the school bus; 3. on the bus, sitting; 4. at school, goes into the classroom): `;
+
+function generateStory() {  
     // Get the input textarea element
     var inputTextarea = document.getElementById("story_input");
     
     // Get the value from the input textarea
     var inputValue = inputTextarea.value;
-    console.log(inputValue);
     
     // Make a POST request to the ChatGPT API endpoint
-    fetch('https://api.openai.com/v1/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer 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' // 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
-        },
-        body: JSON.stringify({
-            model: 'text-davinci-003', // Specify the model you want to use 'text-davinci-003' 
-            prompt: inputValue,
-            max_tokens: 150 // Specify the maximum number of tokens to generate
-        })
-    })
+    fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{role: "user", content: description + inputValue}],
+            temperature: 1.0,
+            top_p: 0.7,
+            n: 1,
+            stream: false,
+            presence_penalty: 0,
+            frequency_penalty: 0,
+          }),
+        }
+      )
     .then(response => response.json())
     .then(data => {
         // Get the output textarea element
         var outputTextarea = document.getElementById("story_output");
-        console.log(data.choices);
+        
         // Set the value of the output textarea to the generated response
-        outputTextarea.value = data.choices[0].text.trim();
+        outputTextarea.value = data.choices[0].message.content;
     })
     .catch(error => {
         console.error('Error:', error);
