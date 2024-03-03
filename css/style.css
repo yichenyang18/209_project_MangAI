@@ -2040,7 +2040,7 @@ ol {
 }
 
 .chapter_img {
-    display: flex;
+    display: block;
     justify-content: center; /* Align content horizontally in the center */
     align-items: center; /* Align content vertically in the center */
     height: 100vh; /* Set the height of the container to the full viewport height */
