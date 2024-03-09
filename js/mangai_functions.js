@@ -63,6 +63,9 @@ var storyline_page = `<div class="anime__details__form">
                         <form action="#">
                             <textarea placeholder="Storyline for the chapter: ..." id="story_output"></textarea>
                         </form>
+                        <form action="#">
+                            <button type="submit" onclick="addToPrompts()"><i class="fa fa-location-arrow"></i>Add to prompts</button>
+                        </form>
                       </div>`;
 
 var chapter_page =  `<div class="anime__details__form">
@@ -90,11 +93,19 @@ var chapter_page =  `<div class="anime__details__form">
                         <br>
                         <br>
                         <div class="anime__details__form">
-                        <div class="section-title">
-                            <h5>Generated Result</h5>
-                        </div>
-                        <div class="chapter_img" id="character_img_container">
-                            <img src="img/test_output.jpg" alt="Image">
+                            <div class="section-title">
+                                <h5>Generated Result</h5>
+                            </div>
+                            <div class="anime__details__form">
+                                <form action="#">
+                                    <button type="submit" onclick="drawCanvas()"><i class="fa fa-angle-right"></i>Form page</button>
+                                    <button type="submit" onclick="imageDownload()"><i class="fa fa-angle-right"></i>Download</button>
+                                </form>
+                            </div>
+                            <canvas id="convergedCanvas" width="1024" height="1024"></canvas>
+                            <div class="chapter_img" id="character_img_container">
+                                <img src="img/test_output.jpg" alt="Image">
+                            </div>
                         </div>
                     </div>`;
 
@@ -102,6 +113,8 @@ function changeContent(option) {
     var contentDiv = document.getElementById("content");
     switch (option) {
         case 'Overview':
+            updateimageURLs();
+            console.log(imageURLs);
             contentDiv.innerHTML = overview_page;
             break;
         case 'Characters':
@@ -112,6 +125,7 @@ function changeContent(option) {
             break;
         case 'Chapters':
             contentDiv.innerHTML = chapter_page;
+            changePromptValue();
             break;
         default:
             contentDiv.innerHTML = "<h2>Error</h2>";
@@ -121,20 +135,23 @@ function changeContent(option) {
 /*------------------
     Overview Pages
 --------------------*/
-var images = ["img/test_output.jpg", "img/test_output2.jpg", "img/test_character_output.jpg"]; // Array of image URLs
+var imageURLs = ["img/test_output.jpg", "img/test_output2.jpg", "img/test_character_output.jpg"]; // Array of image URLs
 var currentIndex = 0; // Index of the currently displayed image
+var newImage = "";
 
 function nextImage() {
     var sliderImage = document.getElementById("sliderImage");
     
     // Increment the currentIndex and loop back to the start if necessary
-    currentIndex = (currentIndex + 1) % images.length;
+    currentIndex = (currentIndex + 1) % imageURLs.length;
     
     // Update the src attribute of the image element
-    sliderImage.src = images[currentIndex];
+    sliderImage.src = imageURLs[currentIndex];
 }
 
-
+function updateimageURLs() {
+    imageURLs.push(newImage);
+}
 
 /*------------------
     Character Generation
@@ -220,11 +237,14 @@ function generateCharacter(){
     Story Generation
 --------------------*/
 
-const API_KEY = "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";  // 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
+const API_KEY = "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";  // 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
 const description = `For the following input, extend it to 4 sentence by adding additional actions and 
                     each sentence only consists of key words or short phrases including action and environmental description
                     (for example: John goes to school today -> 1. at home, walk to the door; 2. outside, get on
                     the school bus; 3. on the bus, sitting; 4. at school, goes into the classroom): `;
+
+var text_prompt_content;
+var img_prompts=['prompt1', 'prompt2', 'prompt3', 'prompt4'];
 
 function generateStory() {  
     // Get the input textarea element
@@ -260,13 +280,31 @@ function generateStory() {
         var outputTextarea = document.getElementById("story_output");
         
         // Set the value of the output textarea to the generated response
-        outputTextarea.value = data.choices[0].message.content;
+        text_prompt_content = data.choices[0].message.content;
+        outputTextarea.value = text_prompt_content;
     })
     .catch(error => {
         console.error('Error:', error);
     });
 }
 
+function addToPrompts(){
+    // Get the input textarea element
+    var inputTextarea = document.getElementById("story_output");
+
+    // Get the value from the input textarea
+    var inputValue = inputTextarea.value;
+
+    var linesArray = inputValue.split('\n');
+
+    // Remove prefix (number and dot) from substrings if present
+    for (var i = 0; i < linesArray.length; i++) {
+        linesArray[i] = linesArray[i].replace(/^\d+\.\s*/, ''); // Replace number and dot at the beginning of the string
+    }
+
+    img_prompts = linesArray;
+
+}
 
 /*------------------
     Page Generation
@@ -287,6 +325,8 @@ function generatePage(){
     // Clear image container
     var imageContainer = document.getElementById("character_img_container");
     imageContainer.innerHTML = "";
+
+    var mangaUrls = [];
 
     prompts.forEach(function(prompt){
         var body = {
@@ -323,6 +363,9 @@ function generatePage(){
 
             var imageContainer = document.getElementById("character_img_container");
             data.artifacts.forEach(function(artifact, index) {
+                imgSrc = "data:image/png;base64," + artifact.base64; 
+                mangaUrls.push(imgSrc);
+
                 // Create an image element
                 var img = document.createElement("img");
         
@@ -335,9 +378,141 @@ function generatePage(){
                 // Append the image to the image container
                 imageContainer.appendChild(img);
             });
+            
         })
         .catch(error => {
             console.error('Error:', error);
         });
     })
+
+    console.log(mangaUrls);
+}
+
+function drawCanvas(){
+    console.log("Drawing...");
+    // Get the canvas and its 2D rendering context
+    var canvas = document.getElementById("convergedCanvas");
+    var ctx = canvas.getContext('2d');
+  
+    // Get the images from the image container
+    var images = document.getElementById("character_img_container").getElementsByTagName('img');
+  
+    // Set the number of rows and columns for the grid
+    var rows = 2;
+    var columns = 2;
+  
+    // Calculate the width and height of each frame
+    var frameWidth = 480;
+    var frameHeight = 480;
+  
+    // Loop through each image and draw it onto the canvas
+    for (var i = 0; i < images.length; i++) {
+      var img = images[i];
+      console.log(img);
+
+      // Create a temporary canvas to resize the image
+      var tempCanvas = document.createElement('canvas');
+      var tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = 480;
+      tempCanvas.height = 480;
+      
+      // Draw the image onto the temporary canvas with resizing
+      tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+      
+      // Calculate the row and column for the current image
+      var row = Math.floor(i / columns);
+      var col = i % columns;
+  
+      // Draw the resized image onto the canvas at the corresponding frame
+      ctx.drawImage(tempCanvas, col * (frameWidth + 21), row * (frameHeight + 21), frameWidth, frameHeight);
+    }
+}
+
+function changePromptValue(){
+    document.getElementById("prompt1_input").value = img_prompts[0];
+    document.getElementById("prompt2_input").value = img_prompts[1];
+    document.getElementById("prompt3_input").value = img_prompts[2];
+    document.getElementById("prompt4_input").value = img_prompts[3];
+}
+
+// Function to handle download button click
+let imageIdx = 0;
+
+function imageDownload() {
+    // Convert canvas content to a data URL
+    var canvas = document.getElementById('convergedCanvas');
+    var dataUrl = canvas.toDataURL('image/png');
+
+    // Create a temporary anchor element
+    var downloadLink = document.createElement('a');
+    downloadLink.href = dataUrl;
+    downloadLink.download = "my_manga_" + imageIdx + ".jpg"; // Specify the filename for download
+    newImage = "img/my_manga_" + imageIdx + ".jpg";
+
+    imageIdx++;
+
+    // Append the anchor element to the body
+    document.body.appendChild(downloadLink);
+
+    // Programmatically trigger a click event on the anchor element
+    downloadLink.click();
+
+    // Remove the anchor element from the body
+    document.body.removeChild(downloadLink);
+
+    
+    // // Get the image URL
+    // var imageUrl = document.getElementById('character_img_container').getElementsByTagName('img')[0].src;
+
+    // // Create a temporary anchor element
+    // var downloadLink = document.createElement('a');
+    // downloadLink.href = imageUrl;
+
+    // downloadLink.download = "my_manga_" + imageIdx + ".jpg"; // Specify the filename for download
+    // newImage = "img/my_manga_" + imageIdx + ".jpg";
+
+    // imageIdx++;
+
+    // // Append the anchor element to the body
+    // document.body.appendChild(downloadLink);
+
+    // // Programmatically trigger a click event on the anchor element
+    // downloadLink.click();
+
+    // // Remove the anchor element from the body
+    // document.body.removeChild(downloadLink);
+}
+
+
+/*------------------
+    New work
+--------------------*/
+function createNew(){
+    var name = prompt("Enter the title: ");
+    var genre = prompt("Enter the genre: ");
+
+    var newBlock = `<div class="col-lg-4 col-md-6 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" data-setbg="img/trending/placeholder-image.jpg">
+                            </div>
+
+                            <div class="product__item__text">
+                                <ul>
+                                    <li>` + genre + `</li>
+                                </ul>
+                                <h5><a href="editingpage.html">` + name + `</a></h5>
+                            </div>
+                        </div>
+                    </div>`;
+    
+    // Create a new div element
+    var newDiv = document.createElement("div");
+
+    // Set the content of the new div
+    newDiv.innerHTML = newBlock;
+    
+    var contentContainer = document.getElementById("my_manga");
+    // contentContainer.innerHTML = "";
+    contentContainer.appendChild(newDiv);
+
 }
