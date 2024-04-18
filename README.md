@@ -31,3 +31,8 @@ MangAI is an AI-assisted tool crafted to empower users, regardless of their prof
 5. **Overview:**
    - Click on `Overview` on the sidebar to see the lastest content!
    - ![](readme_img/overview.png)
+
+
+## Reference
+https://themewagon.com/themes/free-bootstrap-4-html5-gaming-anime-website-template-anime/
+
