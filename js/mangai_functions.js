@@ -135,7 +135,7 @@ function changeContent(option) {
 /*------------------
     Overview Pages
 --------------------*/
-var imageURLs = ["img/test_output.jpg", "img/test_output2.jpg", "img/test_character_output.jpg"]; // Array of image URLs
+var imageURLs = ["img/trending/placeholder-image.jpg"]; // Array of image URLs
 var currentIndex = 0; // Index of the currently displayed image
 var newImage = "";
 
